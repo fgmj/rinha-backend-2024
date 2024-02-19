@@ -96,7 +96,7 @@ public class ClienteController {
                 return ResponseEntity.unprocessableEntity().build();
             }
 
-            service.registraTransacao(transacao, id);
+            service.registraTransacaoWithPessimisticLocking(transacao, id);
 
         } catch (SaldoInsuficienteException e) {
             return ResponseEntity.unprocessableEntity().build();

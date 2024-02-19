@@ -9,6 +9,8 @@ import br.com.fernandojunior.rinhaspringdemo.model.Transacao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,28 +33,55 @@ public class ClienteService {
 
 
 
-
     @Transactional()
     public void registraTransacao(Transacao transacao, long idCliente) throws SaldoInsuficienteException, ClienteNaoEncontradoException {
 
-        Cliente cliente = repository.findByIdLocked(idCliente).orElseThrow(ClienteNaoEncontradoException::new);
-
+        //Cliente cliente = repository.findByIdLocked(idCliente).orElseThrow(ClienteNaoEncontradoException::new);
+        Cliente cliente = repository.findById(idCliente).orElseThrow(ClienteNaoEncontradoException::new);
         transacao.setCliente(cliente);
-
-        if (transacao.getTipo() == 'c'){
-            cliente.setSaldo((cliente.getSaldo() + transacao.getValor().longValue()));
-        } else {
-            long newBalance = cliente.getSaldo() - transacao.getValor().longValue();
-            if (Math.abs(newBalance) > cliente.getLimite()) {
-                throw new SaldoInsuficienteException();
-            }
-            cliente.setSaldo(newBalance);
-        }
         transacao.setDataLancamento(LocalDateTime.now());
 
-        repository.save(cliente);
+        long valorTransacao = transacao.getValor().longValue();
+        if (transacao.getTipo() == 'd'){
+            valorTransacao = valorTransacao * -1;
+        }
+
+        if (Math.abs(cliente.getSaldo()+valorTransacao) < cliente.getLimite()*-1) {
+                throw new SaldoInsuficienteException();
+        }
+
+        repository.update(idCliente, valorTransacao);
         transacaoRepository.save(transacao);
     }
+
+    @Transactional
+    public void registraTransacaoWithPessimisticLocking(Transacao transacao, long idCliente) throws SaldoInsuficienteException, ClienteNaoEncontradoException {
+
+        Cliente cliente = repository.findByIdWithPessimisticLocking(idCliente).orElseThrow(() -> {
+            throw new ClienteNaoEncontradoException();
+        });
+
+
+        long valorTransacao = transacao.getValor().longValue();
+        if (transacao.getTipo() == 'd'){
+            valorTransacao = valorTransacao * -1;
+        }
+
+        long newBalance = (cliente.getSaldo() + valorTransacao);
+        if (newBalance < cliente.getLimite() * -1) {
+            throw new SaldoInsuficienteException();
+        }
+
+        transacao.setCliente(cliente);
+        transacao.setDataLancamento(LocalDateTime.now());
+        cliente.setSaldo(newBalance);
+        repository.save(cliente);
+
+        transacaoRepository
+                .save(transacao);
+    }
+
+
 
     @Transactional
     public List<?> findUltimasTrasacoes(Cliente c) {
