@@ -21,14 +21,14 @@ public class RetryConfig {
         RetryTemplate retryTemplate = new RetryTemplate();
 
         FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
-        fixedBackOffPolicy.setBackOffPeriod(3000l);
+        fixedBackOffPolicy.setBackOffPeriod(300l);
 
         retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
 
         Map<Class<? extends Throwable>, Boolean> includeExceptions = new HashMap<>();
         includeExceptions.put(CannotAcquireLockException.class, true);
 
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(5, includeExceptions);
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(10, includeExceptions);
         retryTemplate.setRetryPolicy(retryPolicy);
 
         return retryTemplate;

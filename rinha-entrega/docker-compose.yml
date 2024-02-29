@@ -4,15 +4,11 @@ services:
   api01: &api
     # Lembre-se de que seu serviço HTTP deve estar hospedado num repositório
     # publicamente acessível! Ex.: hub.docker.com
-    image: rinha-spring-demo:latest
+    image: rinha-spring-demo:0.0.1-SNAPSHOT
     hostname: api01
     environment:
       - DB_HOSTNAME=db
       - SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=15
-
-    # Não é necessário expor qualquer porta além da porta do load balancer,
-    # mas é comum as pessoas o fazerem para testarem suas APIs e conectarem
-    # ao banco de dados na fase de desenvolvimento.
     ports:
       - "8081:8080"
     depends_on:
@@ -20,8 +16,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.3"
-          memory: "100MB"
+          cpus: "0.30"
+          memory: "200MB"
 
   api02:
     # Essa sintaxe reusa o que foi declarado em 'api01'.
@@ -29,6 +25,7 @@ services:
     hostname: api02
     environment:
       - DB_HOSTNAME=db
+      - SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=15
     ports:
       - "8082:8080"
 
@@ -50,7 +47,6 @@ services:
 
   db:
     image: postgres:latest
-    restart: always
     hostname: db
     environment:
       - POSTGRES_PASSWORD=backend
@@ -60,7 +56,6 @@ services:
       - "5432:5432"
     volumes:
       - ./ddl.sql:/docker-entrypoint-initdb.d/script.sql
-      #- database_data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
@@ -68,8 +63,8 @@ services:
           # aqui declarados é de 1.5 unidades de CPU e 550MB
           # de memória. A distribuição feita aqui é apenas
           # um exemplo – distribua como quiser.
-          cpus: "0.5"
-          memory: "200MB"
+          cpus: "0.7"
+          memory: "140MB"
 
 # O uso do modo `bridge` deve ser adequado à carga que será usada no teste.
 # A edição anterior se beneficiou do modo host pois o volume de requisições
@@ -81,8 +76,3 @@ networks:
   default:
     driver: bridge
     name: rinha-nginx-2024q1
-
-
-volumes:
-  database_data:
-    driver: local
