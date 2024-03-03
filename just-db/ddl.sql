@@ -10,9 +10,7 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-
 SET default_tablespace = '';
-
 SET default_table_access_method = heap;
 
 CREATE UNLOGGED TABLE cliente (
@@ -21,29 +19,23 @@ CREATE UNLOGGED TABLE cliente (
 	saldo INTEGER NOT NULL
 );
 
---create UNLOGGED table transacao (
---tipo char(1) not null,
---valor numeric(10,0) not null,
---cliente_id bigint not null,
---data_lancamento timestamp(6),
---id bigserial not null,
---descricao varchar(10) not null, primary key (id));
+
 CREATE UNLOGGED TABLE transacao (
     id SERIAL PRIMARY KEY,
     tipo char(1) not null,
     valor numeric(10,0) NOT NULL,
     descricao varchar(10) NOT NULL,
-    data_lancamento timestamp NOT NULL,
-    cliente_id integer NOT NULL
+    data_lancamento timestamp(6) NOT NULL,
+    cliente_id integer NOT NULL,
+    CONSTRAINT fk_transacoes_clientes_id
+           FOREIGN KEY (cliente_id) REFERENCES cliente (id)
 );
 
-CREATE INDEX ix_transacao_idcliente ON transacao(
-    cliente_id ASC
-);
+CREATE INDEX idx_transacoes_cliente_id ON transacao (cliente_id);
 
+CREATE INDEX idx_transacoes_cliente_id_realizada_em ON transacao (cliente_id, data_lancamento desc);
 
---alter table if exists transacao add constraint FKk44khwkynm4lmqa4ewiaaprdb foreign key (cliente_id) references cliente;
---ALTER TABLE cliente ADD CONSTRAINT balance_check CHECK (saldo >= -limite);
+CREATE INDEX idx_transacoes_realizada_em ON transacao (data_lancamento desc);
 
 --DML
 INSERT INTO public.cliente(	limite, saldo, id) 	VALUES (100000, 0, 1);

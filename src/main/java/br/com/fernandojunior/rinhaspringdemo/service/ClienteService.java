@@ -15,12 +15,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ClienteService {
 
+    //private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern();
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
     private ClienteRepository repository;
 
@@ -39,7 +44,9 @@ public class ClienteService {
         //Cliente cliente = repository.findByIdLocked(idCliente).orElseThrow(ClienteNaoEncontradoException::new);
         Cliente cliente = repository.findById(idCliente).orElseThrow(ClienteNaoEncontradoException::new);
         transacao.setCliente(cliente);
-        transacao.setDataLancamento(LocalDateTime.now());
+        transacao.setDataLancamento(LocalDateTime.now(ZoneOffset.UTC));
+
+
 
         long valorTransacao = transacao.getValor().longValue();
         if (transacao.getTipo() == 'd'){
@@ -73,7 +80,8 @@ public class ClienteService {
         }
 
         transacao.setCliente(cliente);
-        transacao.setDataLancamento(LocalDateTime.now());
+        transacao.setDataLancamento(LocalDateTime.now(ZoneOffset.UTC));
+
         cliente.setSaldo(newBalance);
         repository.save(cliente);
 
@@ -98,8 +106,16 @@ public class ClienteService {
                         "valor", transacao.getValor(),
                         "tipo", transacao.getTipo(),
                         "descricao", transacao.getDescricao(),
-                        "realizada_em", transacao.getDataLancamento()))
+                        "realizada_em", transacao.getDataLancamento().format(formatter)))
                 .collect(Collectors.toList());
+
+
+    }
+
+    public static void main(String[] args) {
+        System.out.println(LocalDateTime.now(ZoneOffset.UTC).atOffset(ZoneOffset.UTC).format(formatter));
+        System.out.println(LocalDateTime.now().format(formatter));
+        System.out.println(LocalDateTime.now().format(formatter));
 
 
     }
@@ -112,10 +128,12 @@ public class ClienteService {
             Cliente cliente = (Cliente) ultimasTransacoes.get(0)[0];
             HashMap<String,Object> retorno = new HashMap<>();
 
+
             Map<String, Object> saldo = new HashMap<String, Object>();
             saldo.put("total", cliente.getSaldo());
             saldo.put("limite", cliente.getLimite());
-            saldo.put("data_extrato", LocalDateTime.now());
+
+            saldo.put("data_extrato", LocalDateTime.now(ZoneOffset.UTC).atOffset(ZoneOffset.UTC).format(formatter)  );
 
             retorno.put("saldo", saldo);
 
@@ -127,7 +145,7 @@ public class ClienteService {
                             "valor", transacao.getValor(),
                             "tipo", transacao.getTipo(),
                             "descricao", transacao.getDescricao(),
-                            "realizada_em", transacao.getDataLancamento()));
+                            "realizada_em", transacao.getDataLancamento().atOffset(ZoneOffset.UTC).format(formatter)));
                 }
             }
             retorno.put("ultimas_transacoes", transacoes);
