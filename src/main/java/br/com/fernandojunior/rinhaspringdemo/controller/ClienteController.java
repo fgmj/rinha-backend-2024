@@ -5,6 +5,7 @@ import br.com.fernandojunior.rinhaspringdemo.exception.ClienteNaoEncontradoExcep
 import br.com.fernandojunior.rinhaspringdemo.exception.SaldoInsuficienteException;
 import br.com.fernandojunior.rinhaspringdemo.model.Transacao;
 import br.com.fernandojunior.rinhaspringdemo.service.ClienteService;
+
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/clientes")
@@ -23,6 +25,8 @@ public class ClienteController {
 
     private final ClienteService service;
     private final ClienteRepository repository;
+
+    Logger logger = Logger.getLogger(ClienteController.class.getName());
 
     ClienteController(ClienteRepository repository, ClienteService service) {
         this.repository = repository;
@@ -99,8 +103,10 @@ public class ClienteController {
             service.registraTransacaoWithPessimisticLocking(transacao, id);
 
         } catch (SaldoInsuficienteException e) {
+            logger.info("saldo insuficiente.");
             return ResponseEntity.unprocessableEntity().build();
         } catch (ClienteNaoEncontradoException e) {
+            logger.info("cliente nao encontrado.");
             return ResponseEntity.notFound().build();
         }
 
